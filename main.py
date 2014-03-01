@@ -20,6 +20,7 @@ class platform(pygame.sprite.Sprite):
    y = 0
    y_speed=0
    #adsf
+   #asdf2 
    def __init__(self,left,top,width,height,color):
        pygame.sprite.Sprite.__init__(self)
        self.rect = pygame.Rect(left,top,width,height) 
