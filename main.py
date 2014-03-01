@@ -18,6 +18,8 @@ class platform(pygame.sprite.Sprite):
    score=0
    x = 0
    y = 0
+   y_speed=0
+   #adsf
    def __init__(self,left,top,width,height,color):
        pygame.sprite.Sprite.__init__(self)
        self.rect = pygame.Rect(left,top,width,height) 
@@ -32,7 +34,7 @@ class player(pygame.sprite.Sprite):
     xtarget=0
     ytarget=0
     xspeed=0
-    yspeed=0
+    yspeed=-20
     def __init__(self,left,top,width,height,color):
        pygame.sprite.Sprite.__init__(self)
        self.rect = pygame.Rect(left,top,width,height) 
@@ -59,6 +61,8 @@ class player(pygame.sprite.Sprite):
             self.move_up()
         if(self.ytarget>self.y):
             self.move_down()
+        if(self.yspeed==0):
+            self.yspeed = -5
 
     def move_down(self):
        print "moving down"
@@ -66,8 +70,8 @@ class player(pygame.sprite.Sprite):
        self.rect.move_ip(0,1)
     def move_up(self):
        print "moving up"
-       self.y = self.y - 1
-       self.rect.move_ip(0,-1)
+       self.y = self.y + self.yspeed 
+       self.rect.move_ip(0,self.yspeed)
 
     def move_left(self):
        print "moving left"
