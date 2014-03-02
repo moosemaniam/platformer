@@ -1,4 +1,9 @@
+"""
+Todos:
+1)preserve horizontal momentum
+"""
 import pygame,sys
+G=10
 FPS = 30
 BLACK = (0,0,0)
 WHITE = (255,255,255)
@@ -7,9 +12,9 @@ GRN = (30,240,40)
 CLR_KEY=(0,128,128)
 X_OFFSET=70
 Y_OFFSET=95
-W=400
-H=200
-NUM=10
+W=800
+H=400
+NUM=5
 #Platform object
 class platform(pygame.sprite.Sprite):
    offset=5
@@ -19,8 +24,6 @@ class platform(pygame.sprite.Sprite):
    x = 0
    y = 0
    y_speed=0
-   #adsf
-   #asdf2 
    def __init__(self,left,top,width,height,color):
        pygame.sprite.Sprite.__init__(self)
        self.rect = pygame.Rect(left,top,width,height) 
@@ -28,64 +31,81 @@ class platform(pygame.sprite.Sprite):
        self.image.fill(color)
        self.color = color
    def draw(self,screen):
-        screen.fill(self.color,self.rect)
+        new_rect = self.rect
+        new_rect.height = new_rect.height - 5
+        screen.fill(self.color,new_rect)
    
 class player(pygame.sprite.Sprite):
     offset = 2
     xtarget=0
     ytarget=0
     xspeed=0
-    yspeed=-20
+    x_change=0
+    y_change=0
+    screen_rect = pygame.Rect(0,0,W,H)
+    platform_list=pygame.sprite.Group()
     def __init__(self,left,top,width,height,color):
        pygame.sprite.Sprite.__init__(self)
        self.rect = pygame.Rect(left,top,width,height) 
        self.image= pygame.Surface((width, height)) 
        self.image.fill(color)
        self.color = color
-       self.x = left
-       self.y =top 
-       self.xtarget = self.x
-       self.ytarget = self.y
 
-    def print_info(self):
-        print "x" ,self.x
-        print "y" ,self.y
-        print "xtarget",self.xtarget
-        print "ytarget",self.ytarget
     def update(self):
-        print "update"
-        if(self.xtarget>self.x):
-            self.move_right()
-        if(self.xtarget<self.x):
-            self.move_left()
-        if(self.ytarget<self.y):
-            self.move_up()
-        if(self.ytarget>self.y):
-            self.move_down()
-        if(self.yspeed==0):
-            self.yspeed = -5
+       #Gravity 
+       self.apply_gravity()
+       self.rect.x += self.x_change
+       #While moving left do we hit anything ?
+       #While Moving right do we hit anything
+       hit_list = pygame.sprite.spritecollide(self,self.platform_list,False)
+       for platform in hit_list:
+            if(self.x_change > 0 ):
+                self.rect.right = platform.rect.left
+            elif(self.x_change < 0):
+                self.rect.left = platform.rect.right
+      
+       self.rect.y += self.y_change
+       hit_list = pygame.sprite.spritecollide(self,self.platform_list,False)
+       for platform in hit_list:
+            if(self.y_change > 0 ):
+                self.rect.bottom= platform.rect.top
+            elif(self.y_change < 0):
+                self.rect.top= platform.rect.bottom
 
-    def move_down(self):
-       print "moving down"
-       self.y = self.y + 1
-       self.rect.move_ip(0,1)
-    def move_up(self):
-       print "moving up"
-       self.y = self.y + self.yspeed 
-       self.rect.move_ip(0,self.yspeed)
+            self.y_change=0
+      
+       #While moving up do we hit anything ?
+       self.my_clamp(W,H)
 
-    def move_left(self):
-       print "moving left"
-       self.x = self.x - 1
-       self.rect.move_ip(-1*self.offset,0)
 
-    def move_right(self):
-       print "moving right"
-       self.x = self.x + 1
-       self.rect.move_ip(self.offset,0)
+    def stop(self):
+        self.x_change=0
+    def jump(self):
+        self.rect.bottom += 2
+        hit = pygame.sprite.spritecollideany(self,self.platform_list)
+        self.rect.bottom -= 2
+        if(hit):
+            self.y_change = -2
+    def left(self):
+           self.x_change = -2 
+
+    def right(self):
+           self.x_change = 2 
+
+    def my_clamp(self,W,H): 
+        if(self.rect.left<=0):
+            self.rect.left=0
+        elif(self.rect.right>=W):
+            self.rect.right = W
+        if(self.rect.top <=0):
+            self.rect.top = 0
+        elif(self.rect.bottom >= H):
+            self.rect.bottom = H
+    def apply_gravity(self): 
+        self.y_change +=  0.09
 
     def draw(self,screen):
-        screen.fill(self.color,self.rect)
+       screen.fill(self.color,self.rect)
     
 class Game(object):
       def main(self,screen):
@@ -98,7 +118,7 @@ class Game(object):
         all_Sprite_list = pygame.sprite.Group()
         player_Sprite= pygame.sprite.Group()
    #def __init__(self,left,top,width,height,color):
-        joe = player(0,hsize-15,5,5,RED)
+        joe = player(wsize/2,hsize/2,10,10,RED)
         player_Sprite.add(joe)
         ground = platform(0,hsize-10,wsize,10,GRN)
         all_Sprite_list.add(ground)
@@ -106,28 +126,32 @@ class Game(object):
         for i in range(1,NUM):
             platform_list.append(platform(20*i,hsize-10-20*i,20,10,WHITE))
         all_Sprite_list.add(platform_list)
+        joe.platform_list=all_Sprite_list
         game_loop = True
-
 
         while (game_loop==True):
             screen.fill(BLACK)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return
-                if ((event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)):
-                    return
-                    
-                if ((event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT)):
-                        joe.xtarget = joe.x + 10
-                if ((event.type == pygame.KEYDOWN) and (event.key == pygame.K_LEFT)):
-                        joe.xtarget = joe.x - 10
+                if (event.type == pygame.KEYDOWN ):
+                    if(event.key == pygame.K_ESCAPE):
+                        return
+                    if (event.key == pygame.K_RIGHT):
+                       joe.right() 
+                    if (event.key == pygame.K_LEFT):
+                        joe.left()
 
-                if ((event.type == pygame.KEYDOWN) and (event.key == pygame.K_UP)):
-                        joe.ytarget = joe.y - 5 
-                if ((event.type == pygame.KEYDOWN) and (event.key == pygame.K_DOWN)):
-                        joe.ytarget = joe.y + 5 
+                    if (event.key == pygame.K_UP):
+                        joe.jump()
+                if (event.type == pygame.KEYUP):
+                 if event.key == pygame.K_LEFT and joe.x_change< 0: 
+                    joe.stop()
+                 if event.key == pygame.K_RIGHT and joe.x_change> 0:
+                    joe.stop()
+ 
 
-           # joe.print_info()
+                        
             joe.update()
             all_Sprite_list.update() 
             all_Sprite_list.draw(screen) 
@@ -150,10 +174,7 @@ class Game(object):
  
 pygame.init()
 #Create a screen
-w=400 
-h=600
-pygame.display.set_caption("Moose Pong")
-screen = pygame.display.set_mode((w,h))
-pygame.key.set_repeat(1000/FPS,1000/FPS)
+pygame.display.set_caption("Jump up")
+screen = pygame.display.set_mode((W,H))
 jump_up= Game()
 jump_up.main(screen)
