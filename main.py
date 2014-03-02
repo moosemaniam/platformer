@@ -44,12 +44,13 @@ class player(pygame.sprite.Sprite):
     y_change=0
     screen_rect = pygame.Rect(0,0,W,H)
     platform_list=pygame.sprite.Group()
-    def __init__(self,left,top,width,height,color):
+    def __init__(self,left,top,width,height,color,fill_color):
        pygame.sprite.Sprite.__init__(self)
        self.rect = pygame.Rect(left,top,width,height) 
        self.image= pygame.Surface((width, height)) 
        self.image.fill(color)
        self.color = color
+       self.fill_color = fill_color
 
     def update(self):
        #Gravity 
@@ -107,6 +108,8 @@ class player(pygame.sprite.Sprite):
     def draw(self,screen):
        screen.fill(self.color,self.rect)
     
+    def draww(self,screen):
+       screen.fill(self.fill_color,self.rect)
 class Game(object):
       def main(self,screen):
         boundaries = []
@@ -115,22 +118,26 @@ class Game(object):
         clock1 = pygame.time.Clock()
         screen.fill(BLACK)
         screen_rect = pygame.Rect(0,0,screen.get_width(),screen.get_height())
-        all_Sprite_list = pygame.sprite.Group()
+        plat_list = pygame.sprite.Group()
         player_Sprite= pygame.sprite.Group()
+        all_sprites = pygame.sprite.Group()
    #def __init__(self,left,top,width,height,color):
-        joe = player(wsize/2,hsize/2,10,10,RED)
+        joe = player(wsize/2,hsize/2,10,10,RED,BLACK)
         player_Sprite.add(joe)
         ground = platform(0,hsize-10,wsize,10,GRN)
-        all_Sprite_list.add(ground)
+        plat_list.add(ground)
         platform_list=[]
         for i in range(1,NUM):
             platform_list.append(platform(20*i,hsize-10-20*i,20,10,WHITE))
-        all_Sprite_list.add(platform_list)
-        joe.platform_list=all_Sprite_list
+        plat_list.add(platform_list)
+        joe.platform_list=plat_list
+        all_sprites.add(joe)
+        all_sprites.add(plat_list)
+
         game_loop = True
 
         while (game_loop==True):
-            screen.fill(BLACK)
+            changed_rect = []
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return
@@ -149,26 +156,14 @@ class Game(object):
                     joe.stop()
                  if event.key == pygame.K_RIGHT and joe.x_change> 0:
                     joe.stop()
- 
-
-                        
-            joe.update()
-            all_Sprite_list.update() 
-            all_Sprite_list.draw(screen) 
-            joe.draw(screen) 
-            pygame.display.flip()
+            #draw over the old image 
+            joe.draww(screen)
+            all_sprites.update()            
+            update = pygame.sprite.RenderUpdates(all_sprites)
+            update.draw(screen)
+            pygame.display.update()
 
             clock1.tick(30)
-
-
-
-
-
-
-
-
-
-
 
 
  
